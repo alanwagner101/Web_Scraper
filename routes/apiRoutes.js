@@ -14,7 +14,7 @@ module.exports = function(app) {
     
     app.get("/articles/:id", function(req, res) {
         db.Article.findOne({ _id: req.params.id })
-        .populate("note")
+        .populate("Note")
         .then(function(dbArticle) {
             res.json(dbArticle);
         })
@@ -22,6 +22,12 @@ module.exports = function(app) {
             res.json(err);
         });
     });
+
+    app.get("/saved/:saved", function(req, res) {
+        db.Article.find({ saved: req.params.saved }).then(function(dbArticle) {
+            res.json(dbArticle);
+        })
+    })
     
     app.post("/articles/:id", function(req, res) {
         db.Note.create(req.body)
@@ -35,4 +41,21 @@ module.exports = function(app) {
             res.json(err);
         });
     });
-}
+
+    app.delete("/articles", function(req, res) {
+        db.Article.remove({})
+        .then(function() {
+            console.log("Articles have been successfully deleted");
+        })
+    })
+
+    app.put("/articles/:id", function(req, res) {
+        db.Article.findByIdAndUpdate(req.params.id, {$set: req.body}, {new: true})
+        .then(function() {
+            console.log("Update complete");
+        })
+        .catch(function(err) {
+            res.json(err);
+        });
+    });
+};
