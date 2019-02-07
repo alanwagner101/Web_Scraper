@@ -3,10 +3,12 @@ var deleteButton = $("#delete");
 var saveButton;
 var removeButton;
 var noteButton;
+var noteDelete
 var noteSave = $("#noteSave");
 var articleArea = $("#articleArea");
 var savedArticleArea = $("#savedArticleArea");
 var noteArea = $("#noteArea")
+var xButton = $("#xButton");
 
 var articleAPI = {
     getArticles: function () {
@@ -42,8 +44,8 @@ var articleAPI = {
             headers: {
                 "Content-Type": "application/json"
             },
-            type: "POST",
             url: "/articles/" + id,
+            type: "POST",
             data: JSON.stringify(data)
         });
     },
@@ -51,6 +53,13 @@ var articleAPI = {
         return $.ajax({
             method: "GET",
             url: "/articles/" + id
+        });
+    },
+    deleteNotes: function (body) {
+        return $.ajax({
+            type: "DELETE",
+            url: "/notes",
+            data: body
         });
     }
 };
@@ -78,7 +87,7 @@ var Start = function () {
 
             articles = $("<div class='card articles'>");
             articles.html("<div class='card-header'>" +
-                "<h3>" + element.title + "</h3></div><div class='card-body'>" +
+                "<a href='" + element.link + "'><h3>" + element.title + "</h3></a></div><div class='card-body'>" +
                 "<div class='container'><div class='row'>" +
                 "<div class='col-xl-6'><p>" + element.body + "</p><div class='row'><div class='col-md-12'>" +
                 "<button class='btn btn-default btn-md saveButton' value='" + element._id + "'>Save this article</button></div></div>" +
@@ -96,10 +105,10 @@ var Start = function () {
 
             articleAPI.updateArticle($(this).val(), { saved: true }).then(function () {
                 console.log("Update Complete");
-            })
-        })
+            });
+        });
     });
-}
+};
 
 Start();
 
@@ -135,7 +144,7 @@ var savedStart = function () {
 
                 savedArticles = $("<div class='card articles'>");
                 savedArticles.html("<div class='card-header'>" +
-                    "<h3>" + element.title + "</h3></div><div class='card-body'>" +
+                    "<a href='" + element.link + "'><h3>" + element.title + "</h3></a></div><div class='card-body'>" +
                     "<div class='container'><div class='row'>" +
                     "<div class='col-xl-6'><p>" + element.body + "</p><div class='row'><div class='col-md-12'>" +
                     "<button class='btn btn-default btn-md removeButton' value='" + element._id + "'>Remove from saved articles</button>" +
@@ -144,7 +153,7 @@ var savedStart = function () {
 
                 savedArticleArea.prepend(savedArticles);
             });
-        }
+        };
 
         run();
 
@@ -158,8 +167,8 @@ var savedStart = function () {
             articleAPI.updateArticle($(this).val(), { saved: false }).then(function () {
                 console.log("Update Complete");
                 run();
-            })
-        })
+            });
+        });
 
         noteButton = $(".noteButton");
 
@@ -167,35 +176,62 @@ var savedStart = function () {
 
         var note;
 
-        var noteInput;
-
         noteButton.on("click", function (event) {
             event.preventDefault();
 
             modalLabel.empty();
             noteArea.empty();
 
-            note = $("#note").val();
-
             modalLabel.text("Note For Article: " + noteButton.val());
 
-            articleAPI.getNotes($(this).val()).then(function(results) {
+            articleAPI.getNotes($(this).val()).then(function (results) {
                 console.log(results);
-            })
 
-            noteSave.on("click", function(event) {
+                for (var i = 0; i < results.note.length; i++) {
+                    if (results.note[i] === "") {
+                        console.log(" blank ");
+                    } else {
+                        noteArea.append("<h6 style='float: left;'>" + results.note[i] +
+                            "</h6><button type='button' class='btn btn-danger btn-lrg noteDelete'" + 
+                            " style='float: right;' data-dismiss='modal'" + 
+                            " aria-label='Close'>X</button><br><br>");
+                    };
+                };
+
+                noteDelete = $(".noteDelete");
+
+                // noteDelete.on("click", function (event) {
+                //     event.preventDefault();
+    
+                //   var deleteWords = {body: $(this).parent("div").children("h6").text().replace("'", "")}
+    
+                //     articleAPI.deleteNotes(deleteWords).then(function() {
+                //         console.log("delete successfull");
+        
+                //     });
+                // });
+            });
+
+            noteSave.on("click", function (event) {
                 event.preventDefault();
 
-                articleAPI.addNote($(this).val(), { body: note }).then(function () {
+                note = $("#note").val();
+
+                articleAPI.addNote(noteButton.val(), { body: note }).then(function () {
                     console.log("added note");
                 });
-            })
+
+                $("#note").val("");
 
 
+            });
 
-            $("#note").val("");
-        })
+            xButton.on("click", function(event) {
+                event.preventDefault();
+
+            });
+        });
     });
-}
+};
 
 savedStart();
